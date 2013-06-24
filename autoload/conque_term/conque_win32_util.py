@@ -46,12 +46,10 @@ CREATE_SEPARATE_WOW_VDM = 0x00000800
 CREATE_SHARED_WOW_VDM = 0x00001000
 CREATE_SUSPENDED = 0x00000004
 CREATE_UNICODE_ENVIRONMENT = 0x00000400
-DEBUG_ONLY_THIS_PROCESS = 0x00000002
-DEBUG_PROCESS = 0x00000001
+
 DETACHED_PROCESS = 0x00000008
 EXTENDED_STARTUPINFO_PRESENT = 0x00080000
 INHERIT_PARENT_AFFINITY = 0x00010000
-
 
 # process priority constants 
 
@@ -61,7 +59,6 @@ HIGH_PRIORITY_CLASS = 0x00000080
 IDLE_PRIORITY_CLASS = 0x00000040
 NORMAL_PRIORITY_CLASS = 0x00000020
 REALTIME_PRIORITY_CLASS = 0x00000100
-
 
 # startup info constants 
 
@@ -79,7 +76,6 @@ STARTF_USESHOWWINDOW = 0x00000001
 STARTF_USESIZE = 0x00000002
 STARTF_USESTDHANDLES = 0x00000100
 
-
 # show window constants 
 
 SW_FORCEMINIMIZE = 11
@@ -96,7 +92,6 @@ SW_SHOWNA = 8
 SW_SHOWNOACTIVATE = 4
 SW_SHOWNORMAL = 1
 
-
 # input event types 
 
 FOCUS_EVENT = 0x0010
@@ -104,7 +99,6 @@ KEY_EVENT = 0x0001
 MENU_EVENT = 0x0008
 MOUSE_EVENT = 0x0002
 WINDOW_BUFFER_SIZE_EVENT = 0x0004
-
 
 # key event modifiers 
 
@@ -117,7 +111,6 @@ RIGHT_ALT_PRESSED = 0x0001
 RIGHT_CTRL_PRESSED = 0x0004
 SCROLLLOCK_ON = 0x0040
 SHIFT_PRESSED = 0x0010
-
 
 # process access 
 
@@ -134,13 +127,11 @@ PROCESS_VM_OPERATION = 0x0008
 PROCESS_VM_READ = 0x0010
 PROCESS_VM_WRITE = 0x0020
 
-
 # input / output handles 
 
 STD_INPUT_HANDLE = c_ulong(-10)
 STD_OUTPUT_HANDLE = c_ulong(-11)
 STD_ERROR_HANDLE = c_ulong(-12)
-
 
 CONQUE_WINDOWS_VK = {
     'VK_LBUTTON': 0x0001,
@@ -272,14 +263,12 @@ CONQUE_WINDOWS_VK_ENHANCED = {
     str(int(CONQUE_WINDOWS_VK['VK_END'])): 1
 }
 
-
 # structures used for CreateProcess
 
 # Odd types 
 
 LPBYTE = POINTER(c_ubyte)
 LPTSTR = POINTER(c_char)
-
 
 class STARTUPINFO(Structure):
     _fields_ = [("cb",            c_ulong),
@@ -304,7 +293,6 @@ class STARTUPINFO(Structure):
     def to_str(self):
         return ''
 
-
 class PROCESS_INFORMATION(Structure):
     _fields_ = [("hProcess",    c_void_p),
                 ("hThread",     c_void_p),
@@ -313,7 +301,6 @@ class PROCESS_INFORMATION(Structure):
 
     def to_str(self):
         return ''
-
 
 class MEMORY_BASIC_INFORMATION(Structure):
     _fields_ = [("BaseAddress",       c_void_p),
@@ -327,7 +314,6 @@ class MEMORY_BASIC_INFORMATION(Structure):
     def to_str(self):
         return ''
 
-
 class SECURITY_ATTRIBUTES(Structure):
     _fields_ = [("Length", c_ulong),
                 ("SecDescriptor", c_void_p),
@@ -336,14 +322,12 @@ class SECURITY_ATTRIBUTES(Structure):
     def to_str(self):
         return ''
 
-
 class COORD(Structure):
     _fields_ = [("X", c_short),
                 ("Y", c_short)]
 
     def to_str(self):
         return ''
-
 
 class SMALL_RECT(Structure):
     _fields_ = [("Left", c_short),
@@ -353,7 +337,6 @@ class SMALL_RECT(Structure):
 
     def to_str(self):
         return ''
-
 
 class CONSOLE_SCREEN_BUFFER_INFO(Structure):
     _fields_ = [("dwSize", COORD),
@@ -365,7 +348,6 @@ class CONSOLE_SCREEN_BUFFER_INFO(Structure):
     def to_str(self):
         return ''
 
-
 class CHAR_UNION(Union):
     _fields_ = [("UnicodeChar", c_wchar),
                 ("AsciiChar", c_char)]
@@ -373,14 +355,12 @@ class CHAR_UNION(Union):
     def to_str(self):
         return ''
 
-
 class CHAR_INFO(Structure):
     _fields_ = [("Char", CHAR_UNION),
                 ("Attributes", c_short)]
 
     def to_str(self):
         return ''
-
 
 class KEY_EVENT_RECORD(Structure):
     _fields_ = [("bKeyDown", c_byte),
@@ -395,7 +375,6 @@ class KEY_EVENT_RECORD(Structure):
     def to_str(self):
         return ''
 
-
 class MOUSE_EVENT_RECORD(Structure):
     _fields_ = [("dwMousePosition", COORD),
                 ("dwButtonState", c_int),
@@ -405,13 +384,11 @@ class MOUSE_EVENT_RECORD(Structure):
     def to_str(self):
         return ''
 
-
 class WINDOW_BUFFER_SIZE_RECORD(Structure):
     _fields_ = [("dwSize", COORD)]
 
     def to_str(self):
         return ''
-
 
 class MENU_EVENT_RECORD(Structure):
     _fields_ = [("dwCommandId", c_uint)]
@@ -419,13 +396,11 @@ class MENU_EVENT_RECORD(Structure):
     def to_str(self):
         return ''
 
-
 class FOCUS_EVENT_RECORD(Structure):
     _fields_ = [("bSetFocus", c_byte)]
 
     def to_str(self):
         return ''
-
 
 class INPUT_UNION(Union):
     _fields_ = [("KeyEvent", KEY_EVENT_RECORD),
@@ -436,7 +411,6 @@ class INPUT_UNION(Union):
 
     def to_str(self):
         return ''
-
 
 class INPUT_RECORD(Structure):
     _fields_ = [("EventType", c_short),

@@ -53,7 +53,6 @@ import termios
 import struct
 import shlex
 
-
 class ConqueSubprocess:
 
     # process id
@@ -61,7 +60,6 @@ class ConqueSubprocess:
 
     # stdout+stderr file descriptor
     fd = None
-
 
     def open(self, command, env={}):
         """ Create subprocess using forkpty() """
@@ -74,9 +72,9 @@ class ConqueSubprocess:
         # try to fork a new pty
         try:
             self.pid, self.fd = pty.fork()
-            logging.info(self.pid)
+
         except:
-            logging.info("pty.fork() failed. Did you mean pty.spork() ???")
+
             return False
 
         # child proc, replace with command after altering terminal attributes
@@ -97,7 +95,7 @@ class ConqueSubprocess:
                 attrs[6][tty.VTIME] = 0
                 tty.tcsetattr(1, tty.TCSANOW, attrs)
             except:
-                logging.info('attribute setting failed')
+
                 pass
 
             # replace this process with the subprocess
@@ -106,7 +104,6 @@ class ConqueSubprocess:
         # else master, do nothing
         else:
             pass
-
 
     def read(self, timeout=1):
         """ Read from subprocess and return new output """
@@ -138,11 +135,10 @@ class ConqueSubprocess:
                 if lines == '' or read_ct > 100:
                     break
         except:
-            logging.info(traceback.format_exc())
+
             pass
 
         return output
-
 
     def write(self, input):
         """ Write new input to subprocess """
@@ -153,9 +149,8 @@ class ConqueSubprocess:
             else:
                 os.write(self.fd, bytes(input, 'utf-8'))
         except:
-            logging.info(traceback.format_exc())
-            pass
 
+            pass
 
     def signal(self, signum):
         """ signal process """
@@ -165,12 +160,10 @@ class ConqueSubprocess:
         except:
             pass
 
-
     def close(self):
         """ close process with sigterm signal """
 
         self.signal(15)
-
 
     def is_alive(self):
         """ get process status """
@@ -184,7 +177,6 @@ class ConqueSubprocess:
 
         return p_status
 
-
     def window_resize(self, lines, columns):
         """ update window size in kernel, then send SIGWINCH to fg process """
 
@@ -193,6 +185,5 @@ class ConqueSubprocess:
             os.kill(self.pid, signal.SIGWINCH)
         except:
             pass
-
 
 # vim:foldmethod=marker

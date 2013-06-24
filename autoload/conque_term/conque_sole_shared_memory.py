@@ -45,7 +45,6 @@ if CONQUE_PYTHON_VERSION == 2:
 else:
     import pickle
 
-
 class ConqueSoleSharedMemory():
 
     # is the data being stored not fixed length
@@ -78,7 +77,6 @@ class ConqueSoleSharedMemory():
     # pickle terminator
     TERMINATOR = None
 
-
     def __init__(self, mem_size, mem_type, mem_key, fixed_length=False, fill_char=' ', serialize=False, encoding='utf-8'):
         """ Initialize new shared memory block instance
 
@@ -109,7 +107,6 @@ class ConqueSoleSharedMemory():
         if fixed_length and encoding == 'utf-8':
             self.char_width = 4
 
-
     def create(self, access='write'):
         """ Create a new block of shared memory using the mmap module. """
 
@@ -126,7 +123,6 @@ class ConqueSoleSharedMemory():
             return False
         else:
             return True
-
 
     def read(self, chars=1, start=0):
         """ Read data from shared memory.
@@ -163,7 +159,6 @@ class ConqueSoleSharedMemory():
 
         return shm_str
 
-
     def write(self, text, start=0):
         """ Write data to memory.
 
@@ -190,7 +185,6 @@ class ConqueSoleSharedMemory():
         else:
             self.shm.write(tb + self.TERMINATOR)
 
-
     def clear(self, start=0):
         """ Clear memory block using self.fill_char. """
 
@@ -200,7 +194,6 @@ class ConqueSoleSharedMemory():
             self.shm.write(str(self.fill_char * self.mem_size * self.char_width).encode(self.encoding))
         else:
             self.shm.write(self.TERMINATOR)
-
 
     def close(self):
         """ Close/destroy memory block. """

@@ -50,7 +50,6 @@ correct cursor position.
 
 import vim
 
-
 class ConqueScreen(object):
 
     # the buffer
@@ -66,7 +65,6 @@ class ConqueScreen(object):
     # char encoding for vim buffer
     screen_encoding = 'utf-8'
 
-
     def __init__(self):
         """ Initialize screen size and character encoding. """
 
@@ -80,11 +78,9 @@ class ConqueScreen(object):
         # save screen character encoding type
         self.screen_encoding = vim.eval('&fileencoding')
 
-
     def __len__(self):
         """ Define the len() function for ConqueScreen objects. """
         return len(self.buffer)
-
 
     def __getitem__(self, key):
         """ Define value access for ConqueScreen objects. """
@@ -96,7 +92,6 @@ class ConqueScreen(object):
                 self.append(' ')
 
         return u(self.buffer[buffer_line], 'utf-8')
-
 
     def __setitem__(self, key, value):
         """ Define value assignments for ConqueScreen objects. """
@@ -114,11 +109,9 @@ class ConqueScreen(object):
         else:
             self.buffer[buffer_line] = val
 
-
     def __delitem__(self, key):
         """ Define value deletion for ConqueScreen objects. """
         del self.buffer[self.screen_top + key - 2]
-
 
     def append(self, value):
         """ Define value appending for ConqueScreen objects. """
@@ -134,36 +127,30 @@ class ConqueScreen(object):
         if vim.current.buffer.number == self.buffer.number:
             vim.command('normal! G')
 
-
     def insert(self, line, value):
         """ Define value insertion for ConqueScreen objects. """
-        logging.debug('insert at line ' + str(self.screen_top + line - 2))
+
         l = self.screen_top + line - 2
         try:
             self.buffer.append(value, l)
         except:
             self.buffer[l:l] = [value]
 
-
     def get_top(self):
         """ Get the Vim line number representing the top of the visible terminal. """
         return self.screen_top
-
 
     def get_real_idx(self, line):
         """ Get the zero index Vim line number corresponding to the provided screen line. """
         return (self.screen_top + line - 2)
 
-
     def get_buffer_line(self, line):
         """ Get the Vim line number corresponding to the provided screen line. """
         return (self.screen_top + line - 1)
 
-
     def set_screen_width(self, width):
         """ Set the screen width. """
         self.screen_width = width
-
 
     def clear(self):
         """ Clear the screen. Does not clear the buffer, just scrolls down past all text. """
@@ -172,7 +159,6 @@ class ConqueScreen(object):
         self.buffer.append(' ')
         vim.command('normal! Gzt')
         self.screen_top = len(self.buffer)
-
 
     def set_cursor(self, line, column):
         """ Set cursor position. """
@@ -200,13 +186,8 @@ class ConqueScreen(object):
             except:
                 vim.command('call cursor(' + str(buffer_line) + ', ' + str(real_column) + ')')
 
-
     def reset_size(self, line):
         """ Change screen size """
-
-        logging.debug('buffer len is ' + str(len(self.buffer)))
-        logging.debug('buffer height ' + str(vim.current.window.height))
-        logging.debug('old screen top was ' + str(self.screen_top))
 
         # save cursor line number
         buffer_line = self.screen_top + line
@@ -217,14 +198,12 @@ class ConqueScreen(object):
         self.screen_top = len(self.buffer) - vim.current.window.height + 1
         if self.screen_top < 1:
             self.screen_top = 1
-        logging.debug('new screen top is  ' + str(self.screen_top))
 
         # align bottom of buffer to bottom of screen
         vim.command('normal! ' + str(self.screen_height) + 'kG')
 
         # return new relative line number
         return (buffer_line - self.screen_top)
-
 
     def align(self):
         """ align bottom of buffer to bottom of screen """

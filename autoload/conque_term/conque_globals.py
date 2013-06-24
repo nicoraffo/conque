@@ -31,9 +31,6 @@
 
 import sys
 import re
-import os # DEBUG
-import logging # DEBUG
-import traceback # DEBUG
 
 # PYTHON VERSION
 CONQUE_PYTHON_VERSION = sys.version_info[0]
@@ -47,7 +44,6 @@ try:
 
 except:
     CONQUE_VIM_ENCODING = 'utf-8'
-
 
 def u(str_val, str_encoding='utf-8', errors='strict'):
     """ Foolhardy attempt to make unicode string syntax compatible with both python 2 and 3. """
@@ -70,23 +66,7 @@ def uchr(str):
     else:
         return unichr(str)
 
-
 # Logging
-
-# enable logging # DEBUG
-CONQUE_LOG_FILENAME = None # DEBUG
-if os.path.exists('/home/nraffo/.vim/'): # DEBUG
-    CONQUE_LOG_FILENAME = '/home/nraffo/.vim/pylog.log' # DEBUG
-elif os.path.exists('C:/Documents and Settings/nraffo/vimfiles/'): # DEBUG
-    CONQUE_LOG_FILENAME = 'C:/Documents and Settings/nraffo/vimfiles/pylog.log' # DEBUG
-elif os.path.exists('/Users/nraffo/vimfiles/'): # DEBUG
-    CONQUE_LOG_FILENAME = '/Users/nraffo/vimfiles/pylog.log' # DEBUG
-
-CONQUE_LOG_LEVEL = logging.INFO #DEBUG
-
-if CONQUE_LOG_FILENAME: # DEBUG
-    logging.basicConfig(filename=CONQUE_LOG_FILENAME, level=CONQUE_LOG_LEVEL) # DEBUG
-
 
 # Unix escape sequence settings
 
@@ -261,7 +241,6 @@ CONQUE_FONT = {
     107: {'description': 'Set background color to White', 'attributes': {'ctermbg': '15', 'guibg': '#ffffff'}, 'normal': False}
 }
 
-
 # regular expression matching (almost) all control sequences
 CONQUE_SEQ_REGEX = re.compile("(\x1b\[?\??#?[0-9;]*[a-zA-Z0-9@=>]|\x1b\][0-9];.*?\x07|[\x01-\x0f]|\x1b\([AB0])")
 CONQUE_SEQ_REGEX_CTL = re.compile("^[\x01-\x0f]$")
@@ -279,7 +258,6 @@ CONQUE_COLOR_SEQUENCE = (
     '000', '009', '090', '099', '900', '909', '990', '999',
     '000', '00f', '0f0', '0ff', 'f00', 'f0f', 'ff0', 'fff'
 )
-
 
 # Windows subprocess constants
 

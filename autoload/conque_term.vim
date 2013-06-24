@@ -919,7 +919,7 @@ function! conque_term#read_all(insert_mode) "{{{
                 continue
             endif
 
-            let output = g:ConqueTerm_Terminals[i].read(1)
+            let output = g:ConqueTerm_Terminals[i].read()
 
             if !g:ConqueTerm_Terminals[i].is_buffer && exists('*g:ConqueTerm_Terminals[i].callback')
                 call g:ConqueTerm_Terminals[i].callback(output)
@@ -1353,8 +1353,7 @@ endfunction " }}}
 " read from terminal buffer and return string
 function! s:term_obj.read(...) dict " {{{
 
-    let read_time = get(a:000, 0, 1)
-    let update_buffer = get(a:000, 1, self.is_buffer)
+    let update_buffer = get(a:000, 0, self.is_buffer)
 
     if update_buffer 
         let up_py = 'True'
@@ -1372,7 +1371,7 @@ function! s:term_obj.read(...) dict " {{{
     let output = ''
 
     " read!
-    sil exec s:py . " conque_tmp = " . self.var . ".read(timeout = " . read_time . ", set_cursor = False, return_output = True, update_buffer = " . up_py . ")"
+    sil exec s:py . " conque_tmp = " . self.var . ".read(set_cursor = False, return_output = True, update_buffer = " . up_py . ")"
 
     " ftw!
     try

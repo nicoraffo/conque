@@ -39,7 +39,7 @@ Usage:
     output = p.read()
     p.write('cd ~/vim' + "\r")
     p.write('ls -lha' + "\r")
-    output += p.read(timeout = 500)
+    output += p.read()
     p.close()
 """
 
@@ -72,14 +72,11 @@ class ConqueSubprocess:
         # try to fork a new pty
         try:
             self.pid, self.fd = pty.fork()
-
         except:
-
             return False
 
         # child proc, replace with command after altering terminal attributes
         if self.pid == 0:
-
             # set requested environment variables
             for k in env.keys():
                 os.environ[k] = env[k]
@@ -95,7 +92,6 @@ class ConqueSubprocess:
                 attrs[6][tty.VTIME] = 0
                 tty.tcsetattr(1, tty.TCSANOW, attrs)
             except:
-
                 pass
 
             # replace this process with the subprocess
@@ -105,11 +101,11 @@ class ConqueSubprocess:
         else:
             pass
 
-    def read(self, timeout=1):
+    def read(self):
         """ Read from subprocess and return new output """
 
         output = ''
-        read_timeout = float(timeout) / 1000
+        read_timeout = float(1) / 1000
         read_ct = 0
 
         try:
@@ -135,7 +131,6 @@ class ConqueSubprocess:
                 if lines == '' or read_ct > 100:
                     break
         except:
-
             pass
 
         return output
@@ -149,11 +144,10 @@ class ConqueSubprocess:
             else:
                 os.write(self.fd, bytes(input, 'utf-8'))
         except:
-
             pass
 
     def signal(self, signum):
-        """ signal process """
+        """ Signal process """
 
         try:
             os.kill(self.pid, signum)
@@ -161,12 +155,12 @@ class ConqueSubprocess:
             pass
 
     def close(self):
-        """ close process with sigterm signal """
+        """ Close process with sigterm signal """
 
         self.signal(15)
 
     def is_alive(self):
-        """ get process status """
+        """ Get process status """
 
         p_status = True
         try:
@@ -178,7 +172,7 @@ class ConqueSubprocess:
         return p_status
 
     def window_resize(self, lines, columns):
-        """ update window size in kernel, then send SIGWINCH to fg process """
+        """ Update window size in kernel, then send SIGWINCH to fg process """
 
         try:
             fcntl.ioctl(self.fd, termios.TIOCSWINSZ, struct.pack("HHHH", lines, columns, 0, 0))

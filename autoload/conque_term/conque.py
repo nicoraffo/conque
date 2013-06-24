@@ -145,9 +145,17 @@ class Conque:
         # init tabstops
         self.init_tabstops()
 
+        # build shell environment
+        env_vars = {
+          'TERM': options['TERM'], 
+          'CONQUE': '1', 
+          'LINES': str(self.lines), 
+          'COLUMNS': str(self.columns)
+        }
+
         # open command
         self.proc = ConqueSubprocess()
-        self.proc.open(command, {'TERM': options['TERM'], 'CONQUE': '1', 'LINES': str(self.lines), 'COLUMNS': str(self.columns)})
+        self.proc.open(command, env_vars)
 
         # send window size signal, in case LINES/COLUMNS is ignored
         self.update_window_size(True)
@@ -157,17 +165,21 @@ class Conque:
 
         set_cursor -- Position the cursor in the current buffer when finished
         read -- Check program for new output when finished
-
         """
         # write and read
         self.proc.write(input)
 
         # read output immediately
         if read:
-            self.read(1, set_cursor)
+            self.read(set_cursor)
 
     def write_ord(self, input, set_cursor=True, read=True):
-        """ Write a single character to the subprocess, using an unicode ordinal. """
+        """ Write a single character to the subprocess. 
+
+        input -- A character ordinal
+        set_cursor -- Position the cursor in the current buffer when finished
+        read -- Check program for new output when finished
+        """
 
         if CONQUE_PYTHON_VERSION == 2:
             self.write(unichr(input), set_cursor, read)
@@ -178,43 +190,27 @@ class Conque:
     def write_expr(self, expr, set_cursor=True, read=True):
         """ Write the value of a Vim expression to the subprocess. """
 
-        if CONQUE_PYTHON_VERSION == 2:
-            try:
-                val = vim.eval(expr)
-                self.write(unicode(val, CONQUE_VIM_ENCODING, 'ignore'), set_cursor, read)
-            except:
-
-                pass
-        else:
-            try:
-                # XXX - Depending on Vim to deal with encoding, sadly
-                self.write(vim.eval(expr), set_cursor, read)
-            except:
-
-                pass
-
-    def write_latin1(self, input, set_cursor=True, read=True):
-        """ Write latin-1 string to conque. Very ugly, shood be removed. """
-        # XXX - this whole method is a hack, to be removed soon
+        vim_output = vim.eval(expr)
 
         if CONQUE_PYTHON_VERSION == 2:
             try:
-                input_unicode = input.decode('latin-1', 'ignore')
-                self.write(input_unicode.encode('utf-8', 'ignore'), set_cursor, read)
+                vim_output = unicode(vim_output, CONQUE_VIM_ENCODING, 'ignore')
             except:
-                return
-        else:
-            self.write(input, set_cursor, read)
+                pass
+
+        self.write(vim_output, set_cursor, read)
 
     def write_buffered_ord(self, chr):
-        """ Add character ordinal to input buffer. In case we're not allowed to modify buffer a time of input. """
+        """ Add character ordinal to input queue. 
+
+        In case we're not allowed to modify the screen a time of input. 
+        """
         self.input_buffer.append(chr)
 
-    def read(self, timeout=1, set_cursor=True, return_output=False, update_buffer=True):
+    def read(self, set_cursor=True, return_output=False, update_buffer=True):
         """ Read new output from the subprocess and update the Vim buffer.
 
         Arguments:
-        timeout -- Milliseconds to wait before reading input
         set_cursor -- Set the cursor position in the current buffer when finished
         return_output -- Return new subprocess STDOUT + STDERR as a string
         update_buffer -- Update the current Vim buffer with the new output
@@ -223,15 +219,13 @@ class Conque:
             1. Get new output from subprocess
             2. Split output string into control codes, escape sequences, or plain text
             3. Loop over and process each chunk, updating the Vim buffer as we go
-
         """
         output = ''
 
         # this may not actually work
         try:
-
             # read from subprocess and strip null characters
-            output = self.proc.read(timeout)
+            output = self.proc.read()
 
             if output == '':
                 return
@@ -243,10 +237,10 @@ class Conque:
             # strip null characters. I'm still not sure why they appear
             output = output.replace(chr(0), '')
 
-            # split input into individual escape sequences, control codes, and text output
+            # split input into individual control codes and text output
             chunks = CONQUE_SEQ_REGEX.split(output)
 
-            # if there were no escape sequences, skip processing and treat entire string as plain text
+            # if no control codes were found print output directly to screen
             if len(chunks) == 1:
                 self.plain_text(chunks[0])
 
@@ -256,62 +250,7 @@ class Conque:
                     if s == '':
                         continue
 
-                    # Check for control character match 
-                    if CONQUE_SEQ_REGEX_CTL.match(s[0]):
-
-                        nr = ord(s[0])
-                        if nr in CONQUE_CTL:
-                            getattr(self, 'ctl_' + CONQUE_CTL[nr])()
-                        else:
-
-                            pass
-
-                    # check for escape sequence match 
-                    elif CONQUE_SEQ_REGEX_CSI.match(s):
-
-                        if s[-1] in CONQUE_ESCAPE:
-                            csi = self.parse_csi(s[2:])
-
-                            getattr(self, 'csi_' + CONQUE_ESCAPE[s[-1]])(csi)
-                        else:
-
-                            pass
-
-                    # check for title match 
-                    elif CONQUE_SEQ_REGEX_TITLE.match(s):
-
-                        self.change_title(s[2], s[4:-1])
-
-                    # check for hash match 
-                    elif CONQUE_SEQ_REGEX_HASH.match(s):
-
-                        if s[-1] in CONQUE_ESCAPE_HASH:
-                            getattr(self, 'hash_' + CONQUE_ESCAPE_HASH[s[-1]])()
-                        else:
-
-                            pass
-
-                    # check for charset match 
-                    elif CONQUE_SEQ_REGEX_CHAR.match(s):
-
-                        if s[-1] in CONQUE_ESCAPE_CHARSET:
-                            getattr(self, 'charset_' + CONQUE_ESCAPE_CHARSET[s[-1]])()
-                        else:
-
-                            pass
-
-                    # check for other escape match 
-                    elif CONQUE_SEQ_REGEX_ESC.match(s):
-
-                        if s[-1] in CONQUE_ESCAPE_PLAIN:
-                            getattr(self, 'esc_' + CONQUE_ESCAPE_PLAIN[s[-1]])()
-                        else:
-
-                            pass
-
-                    # else process plain text 
-                    else:
-                        self.plain_text(s)
+                    self.parse_output(s)
 
             # set cusor position
             if set_cursor:
@@ -321,7 +260,6 @@ class Conque:
             self.cursor_set = False
 
         except:
-
             pass
 
         if return_output:
@@ -329,6 +267,48 @@ class Conque:
                 return output
             else:
                 return output.encode(CONQUE_VIM_ENCODING, 'replace')
+
+    def parse_output(self, s):
+        """Parse a chunk of output and send it to the correct handler
+
+        The output could either be a control character, an escape sequence
+        or just a blob of text to be displayed.
+        """
+
+        # Check for control character match 
+        if CONQUE_SEQ_REGEX_CTL.match(s[0]):
+            nr = ord(s[0])
+            if nr in CONQUE_CTL:
+                getattr(self, 'ctl_' + CONQUE_CTL[nr])()
+
+        # check for escape sequence match 
+        elif CONQUE_SEQ_REGEX_CSI.match(s):
+            if s[-1] in CONQUE_ESCAPE:
+                csi = self.parse_csi(s[2:])
+                getattr(self, 'csi_' + CONQUE_ESCAPE[s[-1]])(csi)
+
+        # check for title match 
+        elif CONQUE_SEQ_REGEX_TITLE.match(s):
+            self.change_title(s[2], s[4:-1])
+
+        # check for hash match 
+        elif CONQUE_SEQ_REGEX_HASH.match(s):
+            if s[-1] in CONQUE_ESCAPE_HASH:
+                getattr(self, 'hash_' + CONQUE_ESCAPE_HASH[s[-1]])()
+
+        # check for charset match 
+        elif CONQUE_SEQ_REGEX_CHAR.match(s):
+            if s[-1] in CONQUE_ESCAPE_CHARSET:
+                getattr(self, 'charset_' + CONQUE_ESCAPE_CHARSET[s[-1]])()
+
+        # check for other escape match 
+        elif CONQUE_SEQ_REGEX_ESC.match(s):
+            if s[-1] in CONQUE_ESCAPE_PLAIN:
+                getattr(self, 'esc_' + CONQUE_ESCAPE_PLAIN[s[-1]])()
+
+        # else process plain text 
+        else:
+            self.plain_text(s)
 
     def auto_read(self):
         """ Poll program for more output. 
@@ -347,7 +327,7 @@ class Conque:
             for chr in self.input_buffer:
                 self.write_ord(chr, set_cursor=False, read=False)
             self.input_buffer = []
-            self.read(1)
+            self.read()
 
         # check subprocess status, but not every time since it's CPU expensive
         if self.read_count % 32 == 0:
@@ -366,7 +346,7 @@ class Conque:
         self.read_count += 1
 
         # read output
-        self.read(1)
+        self.read()
 
         # reset timer
         if self.c == 1:
@@ -386,7 +366,6 @@ class Conque:
         try:
             self.set_cursor(self.l, self.c)
         except:
-
             pass
 
         self.cursor_set = True
@@ -410,12 +389,10 @@ class Conque:
 
                 try:
                     if chrd > 255:
-
                         input = input + old_input[i]
                     else:
                         input = input + uchr(CONQUE_GRAPHICS_SET[chrd])
                 except:
-
                     pass
 
         # get current line from Vim buffer
@@ -427,7 +404,6 @@ class Conque:
 
         # if line is wider than screen
         if self.c + len(input) - 1 > self.working_columns:
-
             # Table formatting hack
             if self.unwrap_tables and CONQUE_TABLE_OUTPUT.match(input):
                 self.screen[self.l] = current_line[:self.c - 1] + input + current_line[self.c + len(input) - 1:]
@@ -481,27 +457,22 @@ class Conque:
             buffer_line = self.get_buffer_line(self.l)
 
         # check for previous overlapping coloration
-
         to_del = []
         if buffer_line in self.color_history:
             for i in range(len(self.color_history[buffer_line])):
                 syn = self.color_history[buffer_line][i]
 
                 if syn['start'] >= start and syn['start'] < end:
-
                     vim.command('syn clear ' + syn['name'])
                     to_del.append(i)
                     # outside
                     if syn['end'] > end:
-
                         self.exec_highlight(buffer_line, end, syn['end'], syn['highlight'])
                 elif syn['end'] > start and syn['end'] <= end:
-
                     vim.command('syn clear ' + syn['name'])
                     to_del.append(i)
                     # outside
                     if syn['start'] < start:
-
                         self.exec_highlight(buffer_line, syn['start'], start, syn['highlight'])
 
         # remove overlapped colors
@@ -598,6 +569,7 @@ class Conque:
         pass
 
     def ctl_stx(self):
+        """ Unused. """
         pass
 
     def ctl_bel(self):
@@ -651,18 +623,14 @@ class Conque:
         else:
             for val in csi['vals']:
                 if val in CONQUE_FONT:
-
                     # ignore starting normal colors
                     if CONQUE_FONT[val]['normal'] and len(self.color_changes) == 0:
-
                         continue
                     # clear color changes
                     elif CONQUE_FONT[val]['normal']:
-
                         self.color_changes = {}
                     # save these color attributes for next plain_text() call
                     else:
-
                         for attr in CONQUE_FONT[val]['attributes'].keys():
                             if attr in self.color_changes and (attr == 'cterm' or attr == 'gui'):
                                 self.color_changes[attr] += ',' + CONQUE_FONT[val]['attributes'][attr]
@@ -776,12 +744,15 @@ class Conque:
         self.color_changes = {}
 
     def csi_delete_chars(self, csi):
+        """ Remove text from the screen. """
         self.screen[self.l] = self.screen[self.l][:self.c] + self.screen[self.l][self.c + csi['val']:]
 
     def csi_add_spaces(self, csi):
+        """ Append spaces to screen. """
         self.screen[self.l] = self.screen[self.l][: self.c - 1] + ' ' * csi['val'] + self.screen[self.l][self.c:]
 
     def csi_cursor(self, csi):
+        """ Move cursor relative to current position. """
         if len(csi['vals']) == 2:
             new_line = csi['vals'][0]
             new_col = csi['vals'][1]
@@ -799,6 +770,7 @@ class Conque:
             self.screen[self.l] = self.screen[self.l] + ' ' * (self.c - len(self.screen[self.l]))
 
     def csi_set_coords(self, csi):
+        """ Move cursor relative to x/y coords. """
         if len(csi['vals']) == 2:
             new_start = csi['vals'][0]
             new_end = csi['vals'][1]
@@ -819,6 +791,7 @@ class Conque:
         self.color_changes = {}
 
     def csi_tab_clear(self, csi):
+        """ Clear tabstops. """
         # this escape defaults to 0
         if len(csi['vals']) == 0:
             csi['val'] = 0
@@ -830,6 +803,7 @@ class Conque:
                 self.tabstops[i] = False
 
     def csi_set(self, csi):
+        """ Set formatting flags. """
         # 132 cols
         if csi['val'] == 3:
             self.csi_clear_screen(self.parse_csi('2J'))
@@ -846,6 +820,7 @@ class Conque:
         self.color_changes = {}
 
     def csi_reset(self, csi):
+        """ Unset formatting flags. """
         # 80 cols
         if csi['val'] == 3:
             self.csi_clear_screen(self.parse_csi('2J'))
@@ -865,20 +840,23 @@ class Conque:
     # ESC functions 
 
     def esc_scroll_up(self):
+        """ Scroll up one line. """
         self.ctl_nl()
 
         self.color_changes = {}
 
     def esc_next_line(self):
+        """ Scroll up one line and move cursor. """
         self.ctl_nl()
         self.c = 1
 
     def esc_set_tab(self):
-
+        """ Tab. """
         if self.c <= len(self.tabstops):
             self.tabstops[self.c - 1] = True
 
     def esc_scroll_down(self):
+        """ Scroll down one line. """
         if self.l == self.top:
             del self.screen[self.bottom]
             self.screen.insert(self.top, '')
@@ -891,6 +869,7 @@ class Conque:
     # HASH functions 
 
     def hash_screen_alignment_test(self):
+        """ Print a screen alignment picture. """
         self.csi_clear_screen(self.parse_csi('2J'))
         self.working_lines = self.lines
         for l in range(1, self.lines + 1):
@@ -900,12 +879,15 @@ class Conque:
     # CHARSET functions 
 
     def charset_us(self):
+        """ Use U.S. charater set for 8bit text. """
         self.character_set = 'ascii'
 
     def charset_uk(self):
+        """ Use U.K. charater set for 8bit text. """
         self.character_set = 'ascii'
 
     def charset_graphics(self):
+        """ Use graphics charater set for 8bit text. """
         self.character_set = 'graphics'
 
     ###############################################################################################
@@ -924,7 +906,6 @@ class Conque:
         """ Change the Vim window title. """
 
         if key == '0' or key == '2':
-
             vim.command('setlocal statusline=' + re.escape(val))
             try:
                 vim.command('set titlestring=' + re.escape(val))
@@ -941,7 +922,6 @@ class Conque:
         """
         # resize if needed
         if force or vim.current.window.width != self.columns or vim.current.window.height != self.lines:
-
             # reset all window size attributes to default
             self.columns = vim.current.window.width
             self.lines = vim.current.window.height
@@ -1012,7 +992,6 @@ class Conque:
         if full != '':
             vals = full.split(';')
             for val in vals:
-
                 val = re.sub("\D", "", val)
 
                 if val != '':
@@ -1055,4 +1034,5 @@ class Conque:
     def get_buffer_line(self, line):
         """ Get the buffer line number corresponding to the supplied screen line number. """
         return self.screen.get_buffer_line(line)
+
 

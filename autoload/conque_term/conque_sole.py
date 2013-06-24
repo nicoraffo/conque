@@ -94,7 +94,7 @@ class ConqueSole(Conque):
         self.buffer = vim.current.buffer
         self.screen_encoding = vim.eval('&fileencoding')
 
-    def read(self, timeout=1, set_cursor=True, return_output=False, update_buffer=True):
+    def read(self, set_cursor=True, return_output=False, update_buffer=True):
         """ Read from console and update Vim buffer. """
 
         try:
